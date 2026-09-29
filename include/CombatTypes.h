@@ -13,9 +13,9 @@ enum CombatState {
 
 enum EvadeDirection {
     EVADE_NONE,
-    EVADE_TURN_RIGHT, // Left sensor hit border
-    EVADE_TURN_LEFT,  // Right sensor hit border
-    EVADE_FULL_TURN   // Both sensors hit border
+    EVADE_TURN_RIGHT, // Left sensor hit Border Line
+    EVADE_TURN_LEFT,  // Right sensor hit Border Line
+    EVADE_FULL_TURN   // Both sensors hit Border Line
 };
 
 struct MotorCommand {
@@ -31,7 +31,7 @@ struct MotorCommand {
 };
 
 struct CombatSensors {
-    bool start_button_pressed;
+    bool start_trigger_active;
     uint16_t line_left_raw;
     uint16_t line_right_raw;
     uint16_t distance_cm;
@@ -39,7 +39,7 @@ struct CombatSensors {
     uint32_t current_time_ms;
 
     CombatSensors() :
-        start_button_pressed(false),
+        start_trigger_active(false),
         line_left_raw(800),  // Default: safely on black Dohyo surface
         line_right_raw(800), // Default: safely on black Dohyo surface
         distance_cm(0),

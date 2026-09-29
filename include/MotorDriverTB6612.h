@@ -28,8 +28,8 @@ public:
         }
 
         digitalWrite(Pinout::STBY, HIGH);
-        setChannelA(cmd.speed_left);
-        setChannelB(cmd.speed_right);
+        setChannel(Pinout::AIN1, Pinout::AIN2, Pinout::PWMA, cmd.speed_left);
+        setChannel(Pinout::BIN1, Pinout::BIN2, Pinout::PWMB, cmd.speed_right);
     }
 
     void stop() {
@@ -43,37 +43,20 @@ public:
     }
 
 private:
-    void setChannelA(int16_t speed) {
+    void setChannel(uint8_t in1, uint8_t in2, uint8_t pwm_pin, int16_t speed) {
         if (speed > 0) {
-            digitalWrite(Pinout::AIN1, HIGH);
-            digitalWrite(Pinout::AIN2, LOW);
-            analogWrite(Pinout::PWMA, constrain(speed, 0, 255));
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, LOW);
+            analogWrite(pwm_pin, constrain(speed, 0, 255));
         } else if (speed < 0) {
-            digitalWrite(Pinout::AIN1, LOW);
-            digitalWrite(Pinout::AIN2, HIGH);
-            analogWrite(Pinout::PWMA, constrain(-speed, 0, 255));
+            digitalWrite(in1, LOW);
+            digitalWrite(in2, HIGH);
+            analogWrite(pwm_pin, constrain(-speed, 0, 255));
         } else {
-            // Active brake
-            digitalWrite(Pinout::AIN1, HIGH);
-            digitalWrite(Pinout::AIN2, HIGH);
-            analogWrite(Pinout::PWMA, 0);
-        }
-    }
-
-    void setChannelB(int16_t speed) {
-        if (speed > 0) {
-            digitalWrite(Pinout::BIN1, HIGH);
-            digitalWrite(Pinout::BIN2, LOW);
-            analogWrite(Pinout::PWMB, constrain(speed, 0, 255));
-        } else if (speed < 0) {
-            digitalWrite(Pinout::BIN1, LOW);
-            digitalWrite(Pinout::BIN2, HIGH);
-            analogWrite(Pinout::PWMB, constrain(-speed, 0, 255));
-        } else {
-            // Active brake
-            digitalWrite(Pinout::BIN1, HIGH);
-            digitalWrite(Pinout::BIN2, HIGH);
-            analogWrite(Pinout::PWMB, 0);
+            // Active short brake
+            digitalWrite(in1, HIGH);
+            digitalWrite(in2, HIGH);
+            analogWrite(pwm_pin, 0);
         }
     }
 };

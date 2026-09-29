@@ -12,15 +12,21 @@ static UltrasonicSensor ultrasonic;
 static LineSensors line_sensors;
 static CombatEngine engine;
 
-// Periodic telemetry timer
+// Periodic telemetry & sensor timers
 static unsigned long last_telemetry_ms = 0;
+static unsigned long last_ultrasonic_ping_ms = 0;
+static UltrasonicReading cached_ultrasonic = {0, false};
+
+// Start trigger debounce state
+static unsigned long button_press_start_ms = 0;
+static bool button_confirmed_pressed = false;
 
 void setup() {
     Serial.begin(115200);
     Serial.println(F("=== MINISUMO FIRMWARE INITIALIZING ==="));
 
     // Operator interface pins
-    pinMode(Pinout::BUTTON, INPUT_PULLUP);
+    pinMode(Pinout::START_TRIGGER, INPUT_PULLUP);
     pinMode(Pinout::LED, OUTPUT);
     digitalWrite(Pinout::LED, LOW);
 
@@ -37,23 +43,41 @@ void loop() {
     CombatSensors sensors;
     sensors.current_time_ms = now;
 
-    // 1. Operator start button (active LOW via INPUT_PULLUP)
-    sensors.start_button_pressed = (digitalRead(Pinout::BUTTON) == LOW);
+    // 1. Debounced Start Trigger (active LOW via INPUT_PULLUP)
+    bool raw_pressed = (digitalRead(Pinout::START_TRIGGER) == LOW);
+    if (raw_pressed) {
+        if (button_press_start_ms == 0) {
+            button_press_start_ms = now;
+        } else if (now - button_press_start_ms >= 30) {
+            button_confirmed_pressed = true;
+        }
+    } else {
+        button_press_start_ms = 0;
+        button_confirmed_pressed = false;
+    }
+    sensors.start_trigger_active = button_confirmed_pressed;
 
-    // 2. High-frequency line sensor sampling (sampled every iteration > 1 kHz)
+    // 2. High-frequency line sensor sampling (unblocked, runs every iteration > 4 kHz)
     LineSensorsReading line = line_sensors.read();
     sensors.line_left_raw = line.left_raw;
     sensors.line_right_raw = line.right_raw;
 
-    // 3. Ultrasonic sensor reading:
-    // Suppressed during EVADE to prevent blocking escape maneuver and ring-outs (ADR 0001)
-    if (engine.getState() == STATE_SEARCH || engine.getState() == STATE_ATTACK) {
-        UltrasonicReading us = ultrasonic.sample();
-        sensors.distance_cm = us.distance_cm;
-        sensors.target_detected = us.target_detected;
+    // 3. Rate-limited ultrasonic sensor reading (50 ms pacing, avoids transducer ringing):
+    // Active during COUNTDOWN, SEARCH, and ATTACK so direct post-countdown attack is possible.
+    // Strictly suppressed during EVADE (ADR 0001) to protect border escape maneuvers.
+    CombatState current_state = engine.getState();
+    if (current_state == STATE_START_DELAY || current_state == STATE_SEARCH || current_state == STATE_ATTACK) {
+        if (now - last_ultrasonic_ping_ms >= 50) {
+            last_ultrasonic_ping_ms = now;
+            cached_ultrasonic = ultrasonic.sample();
+        }
+        sensors.distance_cm = cached_ultrasonic.distance_cm;
+        sensors.target_detected = cached_ultrasonic.target_detected;
     } else {
         sensors.distance_cm = 0;
         sensors.target_detected = false;
+        cached_ultrasonic.distance_cm = 0;
+        cached_ultrasonic.target_detected = false;
     }
 
     // 4. Update core combat state machine

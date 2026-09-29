@@ -40,9 +40,10 @@ public:
                 m_motor_cmd.speed_right = 0;
                 m_motor_cmd.standby = true;
                 m_led_active = false;
-                if (sensors.start_button_pressed) {
+                if (sensors.start_trigger_active) {
                     m_state = STATE_START_DELAY;
                     m_countdown_start_ms = sensors.current_time_ms;
+                    m_led_active = ((sensors.current_time_ms / 250) % 2) == 0;
                 }
                 break;
 
