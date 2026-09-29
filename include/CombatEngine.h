@@ -33,6 +33,10 @@ public:
         return m_led_active;
     }
 
+    const CombatConfig& getConfig() const {
+        return m_config;
+    }
+
     void update(const CombatSensors& sensors) {
         switch (m_state) {
             case STATE_WAITING_FOR_START:

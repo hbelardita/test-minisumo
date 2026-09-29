@@ -19,7 +19,7 @@ public:
 
     // Strictly capped timeout (4500 us = ~77 cm max travel in Dohyo)
     // Avoids freezing CPU and blinding line sensors
-    UltrasonicReading sample(uint16_t max_range_cm = 70) {
+    UltrasonicReading sample(uint16_t max_range_cm = 45) {
         UltrasonicReading reading;
         reading.distance_cm = 0;
         reading.target_detected = false;

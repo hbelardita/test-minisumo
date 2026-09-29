@@ -63,7 +63,7 @@ void loop() {
     if (current_state == STATE_START_DELAY || current_state == STATE_SEARCH || current_state == STATE_ATTACK) {
         if (now - last_ultrasonic_ping_ms >= 50) {
             last_ultrasonic_ping_ms = now;
-            cached_ultrasonic = ultrasonic.sample();
+            cached_ultrasonic = ultrasonic.sample(engine.getConfig().ultrasonic_max_distance_cm);
         }
         sensors.distance_cm = cached_ultrasonic.distance_cm;
         sensors.target_detected = cached_ultrasonic.target_detected;
