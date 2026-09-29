@@ -59,7 +59,7 @@ struct CombatConfig {
     CombatConfig() :
         start_delay_ms(5000),
         evade_duration_ms(300),
-        line_white_threshold(500),
+        line_white_threshold(400),
         ultrasonic_max_distance_cm(70),
         search_speed(150),
         attack_speed(255),
