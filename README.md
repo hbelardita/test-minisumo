@@ -20,7 +20,7 @@ The project uses [PlatformIO](https://platformio.org/) with isolated build envir
 
 ### 1. Competition Mode (`nanoatmega328` - Default)
 
-Full autonomous combat firmware running the non-blocking state machine (`WAITING_FOR_START` -> `START_DELAY` (5s) -> `SEARCH` / `ATTACK` / `EVADE`).
+Full autonomous combat firmware running the non-blocking state machine (`WAITING_FOR_START` -> `START_DELAY` (5s) -> `SEARCH` / `ATTACK` / `EVADE`). Telemetry over Serial is disabled in this mode to eliminate UART interrupt overhead and maximize MCU performance during competition.
 
 ```bash
 # Build default competition firmware
@@ -28,9 +28,6 @@ pio run
 
 # Build and upload to Arduino Nano
 pio run -t upload
-
-# Open Serial Monitor (115200 baud)
-pio device monitor -b 115200
 ```
 
 ### 2. Bench Sensor Calibration Mode (`sensor_monitor`)

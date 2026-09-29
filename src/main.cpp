@@ -12,8 +12,7 @@ static UltrasonicSensor ultrasonic;
 static LineSensors line_sensors;
 static CombatEngine engine;
 
-// Periodic telemetry & sensor timers
-static unsigned long last_telemetry_ms = 0;
+// Periodic sensor timers
 static unsigned long last_ultrasonic_ping_ms = 0;
 static UltrasonicReading cached_ultrasonic = {0, false};
 
@@ -22,9 +21,6 @@ static unsigned long button_press_start_ms = 0;
 static bool button_confirmed_pressed = false;
 
 void setup() {
-    Serial.begin(115200);
-    Serial.println(F("=== MINISUMO FIRMWARE INITIALIZING ==="));
-
     // Operator interface pins
     pinMode(Pinout::START_TRIGGER, INPUT_PULLUP);
     pinMode(Pinout::LED, OUTPUT);
@@ -34,8 +30,6 @@ void setup() {
     motors.init();
     ultrasonic.init();
     line_sensors.init();
-
-    Serial.println(F("Hardware initialized. Waiting for Start Trigger (D10)..."));
 }
 
 void loop() {
@@ -86,21 +80,4 @@ void loop() {
     // 5. Dispatch commands to physical actuators
     motors.setMotors(engine.getMotorCommand());
     digitalWrite(Pinout::LED, engine.isLedActive() ? HIGH : LOW);
-
-    // 6. Optional telemetry output (every 250ms, non-blocking)
-    if (now - last_telemetry_ms >= 250) {
-        last_telemetry_ms = now;
-        Serial.print(F("State: "));
-        switch (engine.getState()) {
-            case STATE_WAITING_FOR_START: Serial.print(F("WAIT_START")); break;
-            case STATE_START_DELAY:       Serial.print(F("COUNTDOWN_5S")); break;
-            case STATE_SEARCH:            Serial.print(F("SEARCH")); break;
-            case STATE_ATTACK:            Serial.print(F("ATTACK")); break;
-            case STATE_EVADE:             Serial.print(F("EVADE")); break;
-        }
-        Serial.print(F(" | Line L: ")); Serial.print(sensors.line_left_raw);
-        Serial.print(F(" R: "));        Serial.print(sensors.line_right_raw);
-        Serial.print(F(" | Dist: "));   Serial.print(sensors.distance_cm);
-        Serial.print(F(" | Target: ")); Serial.println(sensors.target_detected ? F("YES") : F("NO"));
-    }
 }
