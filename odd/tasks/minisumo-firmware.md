@@ -29,6 +29,6 @@ Implement competitive autonomous Minisumo firmware on Arduino Nano (ATmega328P) 
 - [x] **task-01**: Define pure domain types and interfaces (`include/CombatTypes.h`)
 - [x] **task-02**: TDD Slice 1 - Implement `CombatEngine` state transitions for `WAITING_START` and 5-second `START_DELAY` countdown
 - [x] **task-03**: TDD Slice 2 - Implement `SEARCH` (spin-in-place) and `ATTACK` (direct forward drive) routines
-- [ ] **task-04**: TDD Slice 3 - Implement `EVADE` routine (asymmetric 300 ms recovery with ultrasonic suppression)
+- [x] **task-04**: TDD Slice 3 - Implement `EVADE` routine (asymmetric 300 ms recovery with ultrasonic suppression)
 - [ ] **task-05**: Implement hardware abstraction drivers and pin mapping matching physical wiring
 - [ ] **task-06**: Integrate `src/main.cpp` and verify full PlatformIO build for ATmega328P

@@ -138,6 +138,133 @@ void test_attack_transitions_back_to_search_when_target_lost() {
     std::cout << "[PASS] test_attack_transitions_back_to_search_when_target_lost\n";
 }
 
+void test_left_line_sensor_triggers_evade_right() {
+    CombatConfig config;
+    CombatEngine engine(config);
+    CombatSensors sensors = {};
+
+    // Get to ATTACK state
+    sensors.current_time_ms = 0;
+    sensors.start_button_pressed = true;
+    engine.update(sensors);
+    sensors.current_time_ms = 5001;
+    sensors.start_button_pressed = false;
+    sensors.target_detected = true;
+    sensors.line_left_raw = 800; // Black Dohyo surface
+    sensors.line_right_raw = 800;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_ATTACK);
+
+    // Left sensor hits white border (< threshold, e.g. 200)
+    sensors.current_time_ms = 5100;
+    sensors.line_left_raw = 200; // White border!
+    engine.update(sensors);
+
+    assert(engine.getState() == STATE_EVADE);
+    assert(engine.getEvadeDirection() == EVADE_TURN_RIGHT);
+    MotorCommand cmd = engine.getMotorCommand();
+    assert(cmd.standby == false);
+    // Initial phase of evade: reverse
+    assert(cmd.speed_left < 0 && cmd.speed_right < 0);
+    std::cout << "[PASS] test_left_line_sensor_triggers_evade_right\n";
+}
+
+void test_right_line_sensor_triggers_evade_left() {
+    CombatConfig config;
+    CombatEngine engine(config);
+    CombatSensors sensors = {};
+
+    // Get to SEARCH state
+    sensors.current_time_ms = 0;
+    sensors.start_button_pressed = true;
+    engine.update(sensors);
+    sensors.current_time_ms = 5001;
+    sensors.start_button_pressed = false;
+    sensors.line_left_raw = 800;
+    sensors.line_right_raw = 800;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_SEARCH);
+
+    // Right sensor hits white border
+    sensors.current_time_ms = 5200;
+    sensors.line_right_raw = 150; // White border!
+    engine.update(sensors);
+
+    assert(engine.getState() == STATE_EVADE);
+    assert(engine.getEvadeDirection() == EVADE_TURN_LEFT);
+    std::cout << "[PASS] test_right_line_sensor_triggers_evade_left\n";
+}
+
+void test_ultrasonic_is_suppressed_during_evade() {
+    CombatConfig config;
+    CombatEngine engine(config);
+    CombatSensors sensors;
+
+    // Start countdown
+    sensors.current_time_ms = 0;
+    sensors.start_button_pressed = true;
+    engine.update(sensors);
+
+    // Enter SEARCH at t=5001
+    sensors.current_time_ms = 5001;
+    sensors.start_button_pressed = false;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_SEARCH);
+
+    // Hit border line at t=5050 -> Enter EVADE
+    sensors.current_time_ms = 5050;
+    sensors.line_left_raw = 200; // Hit line
+    sensors.line_right_raw = 800;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_EVADE);
+
+    // Mid-evade (t=5150), opponent appears in front of ultrasonic
+    sensors.current_time_ms = 5150;
+    sensors.target_detected = true;
+    sensors.distance_cm = 15;
+    sensors.line_left_raw = 800; // Sensors now back on black
+    engine.update(sensors);
+
+    // MUST NOT transition to ATTACK! Must stay in EVADE until evade is complete!
+    assert(engine.getState() == STATE_EVADE);
+    std::cout << "[PASS] test_ultrasonic_is_suppressed_during_evade\n";
+}
+
+void test_evade_returns_to_search_after_duration() {
+    CombatConfig config;
+    CombatEngine engine(config);
+    CombatSensors sensors;
+
+    // Start countdown
+    sensors.current_time_ms = 0;
+    sensors.start_button_pressed = true;
+    engine.update(sensors);
+
+    // Enter SEARCH at t=5001
+    sensors.current_time_ms = 5001;
+    sensors.start_button_pressed = false;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_SEARCH);
+
+    // Trigger EVADE at t=5100 (duration is 300ms)
+    sensors.current_time_ms = 5100;
+    sensors.line_left_raw = 200;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_EVADE);
+
+    // At t=5399 (299ms into 300ms evade): still EVADE
+    sensors.current_time_ms = 5399;
+    sensors.line_left_raw = 800;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_EVADE);
+
+    // At t=5400 (300ms elapsed since 5100): returns to SEARCH
+    sensors.current_time_ms = 5400;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_SEARCH);
+    std::cout << "[PASS] test_evade_returns_to_search_after_duration\n";
+}
+
 int main() {
     std::cout << "--- Running CombatEngine Tests ---\n";
     test_initial_state_is_waiting_for_start();
@@ -146,7 +273,12 @@ int main() {
     test_search_spins_in_place_when_no_target();
     test_search_transitions_to_attack_when_target_detected();
     test_attack_transitions_back_to_search_when_target_lost();
+    test_left_line_sensor_triggers_evade_right();
+    test_right_line_sensor_triggers_evade_left();
+    test_ultrasonic_is_suppressed_during_evade();
+    test_evade_returns_to_search_after_duration();
     std::cout << "All tests passed successfully.\n";
     return 0;
 }
+
 

@@ -37,6 +37,14 @@ struct CombatSensors {
     uint16_t distance_cm;
     bool target_detected;
     uint32_t current_time_ms;
+
+    CombatSensors() :
+        start_button_pressed(false),
+        line_left_raw(800),  // Default: safely on black Dohyo surface
+        line_right_raw(800), // Default: safely on black Dohyo surface
+        distance_cm(0),
+        target_detected(false),
+        current_time_ms(0) {}
 };
 
 struct CombatConfig {
