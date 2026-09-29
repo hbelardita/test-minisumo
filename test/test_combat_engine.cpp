@@ -57,11 +57,96 @@ void test_countdown_lasts_full_duration() {
     std::cout << "[PASS] test_countdown_lasts_full_duration\n";
 }
 
+void test_search_spins_in_place_when_no_target() {
+    CombatConfig config;
+    CombatEngine engine(config);
+    CombatSensors sensors = {};
+
+    // Trigger start countdown
+    sensors.current_time_ms = 0;
+    sensors.start_button_pressed = true;
+    engine.update(sensors);
+
+    // Complete 5s countdown
+    sensors.current_time_ms = 5001;
+    sensors.start_button_pressed = false;
+    sensors.target_detected = false;
+    engine.update(sensors);
+
+    assert(engine.getState() == STATE_SEARCH);
+    MotorCommand cmd = engine.getMotorCommand();
+    assert(cmd.standby == false);
+    // Spin in place: opposite directions
+    assert(cmd.speed_left == -config.search_speed);
+    assert(cmd.speed_right == config.search_speed);
+    std::cout << "[PASS] test_search_spins_in_place_when_no_target\n";
+}
+
+void test_search_transitions_to_attack_when_target_detected() {
+    CombatConfig config;
+    CombatEngine engine(config);
+    CombatSensors sensors = {};
+
+    // Complete countdown into SEARCH
+    sensors.current_time_ms = 0;
+    sensors.start_button_pressed = true;
+    engine.update(sensors);
+    sensors.current_time_ms = 5001;
+    sensors.start_button_pressed = false;
+    engine.update(sensors);
+
+    // Target detected at 30 cm
+    sensors.current_time_ms = 5100;
+    sensors.target_detected = true;
+    sensors.distance_cm = 30;
+    engine.update(sensors);
+
+    assert(engine.getState() == STATE_ATTACK);
+    MotorCommand cmd = engine.getMotorCommand();
+    assert(cmd.standby == false);
+    assert(cmd.speed_left == config.attack_speed);
+    assert(cmd.speed_right == config.attack_speed);
+    std::cout << "[PASS] test_search_transitions_to_attack_when_target_detected\n";
+}
+
+void test_attack_transitions_back_to_search_when_target_lost() {
+    CombatConfig config;
+    CombatEngine engine(config);
+    CombatSensors sensors = {};
+
+    // Reach ATTACK state
+    sensors.current_time_ms = 0;
+    sensors.start_button_pressed = true;
+    engine.update(sensors);
+    sensors.current_time_ms = 5001;
+    sensors.start_button_pressed = false;
+    sensors.target_detected = true;
+    sensors.distance_cm = 25;
+    engine.update(sensors);
+    assert(engine.getState() == STATE_ATTACK);
+
+    // Target lost
+    sensors.current_time_ms = 5200;
+    sensors.target_detected = false;
+    sensors.distance_cm = 0;
+    engine.update(sensors);
+
+    assert(engine.getState() == STATE_SEARCH);
+    MotorCommand cmd = engine.getMotorCommand();
+    assert(cmd.speed_left == -config.search_speed);
+    assert(cmd.speed_right == config.search_speed);
+    std::cout << "[PASS] test_attack_transitions_back_to_search_when_target_lost\n";
+}
+
 int main() {
-    std::cout << "--- Running CombatEngine Slice 1 Tests ---\n";
+    std::cout << "--- Running CombatEngine Tests ---\n";
     test_initial_state_is_waiting_for_start();
     test_button_press_starts_countdown();
     test_countdown_lasts_full_duration();
-    std::cout << "All Slice 1 tests passed successfully.\n";
+    test_search_spins_in_place_when_no_target();
+    test_search_transitions_to_attack_when_target_detected();
+    test_attack_transitions_back_to_search_when_target_lost();
+    std::cout << "All tests passed successfully.\n";
     return 0;
 }
+

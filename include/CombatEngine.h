@@ -47,19 +47,60 @@ public:
                 // Blink LED every 250ms during countdown
                 m_led_active = ((sensors.current_time_ms / 250) % 2) == 0;
                 if (sensors.current_time_ms - m_countdown_start_ms >= m_config.start_delay_ms) {
-                    m_state = STATE_SEARCH;
-                    m_led_active = true;
+                    if (sensors.target_detected) {
+                        enterAttack();
+                    } else {
+                        enterSearch();
+                    }
                 }
                 break;
 
             case STATE_SEARCH:
+                if (sensors.target_detected) {
+                    enterAttack();
+                } else {
+                    applySearchMotors();
+                }
+                break;
+
             case STATE_ATTACK:
+                if (!sensors.target_detected) {
+                    enterSearch();
+                } else {
+                    applyAttackMotors();
+                }
+                break;
+
             case STATE_EVADE:
                 break;
         }
     }
 
 private:
+    void enterSearch() {
+        m_state = STATE_SEARCH;
+        m_led_active = true;
+        applySearchMotors();
+    }
+
+    void applySearchMotors() {
+        m_motor_cmd.standby = false;
+        m_motor_cmd.speed_left = -m_config.search_speed;
+        m_motor_cmd.speed_right = m_config.search_speed;
+    }
+
+    void enterAttack() {
+        m_state = STATE_ATTACK;
+        m_led_active = true;
+        applyAttackMotors();
+    }
+
+    void applyAttackMotors() {
+        m_motor_cmd.standby = false;
+        m_motor_cmd.speed_left = m_config.attack_speed;
+        m_motor_cmd.speed_right = m_config.attack_speed;
+    }
+
     CombatConfig m_config;
     CombatState m_state;
     uint32_t m_countdown_start_ms;
