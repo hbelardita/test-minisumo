@@ -32,3 +32,4 @@ Implement competitive autonomous Minisumo firmware on Arduino Nano (ATmega328P) 
 - [x] **task-04**: TDD Slice 3 - Implement `EVADE` routine (asymmetric 300 ms recovery with ultrasonic suppression)
 - [x] **task-05**: Implement hardware abstraction drivers and pin mapping matching physical wiring
 - [x] **task-06**: Integrate `src/main.cpp` and verify full PlatformIO build for ATmega328P
+- [x] **task-07**: Configure `[env:sensor_monitor]` in `platformio.ini` and implement isolated bench calibration telemetry in `src/sensor_monitor.cpp`
