@@ -28,8 +28,10 @@ public:
         }
 
         digitalWrite(Pinout::STBY, HIGH);
-        setChannel(Pinout::AIN1, Pinout::AIN2, Pinout::PWMA, cmd.speed_left);
-        setChannel(Pinout::BIN1, Pinout::BIN2, Pinout::PWMB, cmd.speed_right);
+        // Canal A: Motor Derecho con polaridad física invertida (-rightSpeed)
+        setChannel(Pinout::AIN1, Pinout::AIN2, Pinout::PWMA, -cmd.speed_right);
+        // Canal B: Motor Izquierdo con polaridad física invertida (-leftSpeed)
+        setChannel(Pinout::BIN1, Pinout::BIN2, Pinout::PWMB, -cmd.speed_left);
     }
 
     void stop() {
