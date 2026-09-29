@@ -1,0 +1,3 @@
+# Non-blocking FSM and Ultrasonic Suppression During Evade
+
+In a competitive Minisumo Dohyo, border detection takes absolute priority over target tracking. We decided to structure the firmware as a 100% non-blocking Finite State Machine (FSM) driven by `millis()`, cap the HC-SR04 ultrasonic timeout strictly to 4500 µs (the 77 cm Dohyo boundary limit), and completely suppress ultrasonic readings during the `Evade Routine` (300 ms recovery). Without this, synchronous `pulseIn()` calls freeze the MCU up to 1000 ms, and spurious echoes from referees or exterior objects during an edge recovery would prematurely cancel turns and cause ring-outs.
