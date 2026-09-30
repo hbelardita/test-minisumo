@@ -56,12 +56,12 @@ void loop() {
     sensors.line_left_raw = line.left_raw;
     sensors.line_right_raw = line.right_raw;
 
-    // 3. Rate-limited ultrasonic sensor reading (50 ms pacing, avoids transducer ringing):
+    // 3. Rate-limited ultrasonic sensor reading (75 ms pacing, allows HC-SR04 echo recovery):
     // Active during COUNTDOWN, SEARCH, and ATTACK so direct post-countdown attack is possible.
     // Strictly suppressed during EVADE (ADR 0001) to protect border escape maneuvers.
     CombatState current_state = engine.getState();
     if (current_state == STATE_START_DELAY || current_state == STATE_SEARCH || current_state == STATE_ATTACK) {
-        if (now - last_ultrasonic_ping_ms >= 50) {
+        if (now - last_ultrasonic_ping_ms >= 75) {
             last_ultrasonic_ping_ms = now;
             cached_ultrasonic = ultrasonic.sample(engine.getConfig().ultrasonic_max_distance_cm);
         }
